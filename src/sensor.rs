@@ -1,7 +1,7 @@
 use image::ImageResult;
 use rand::Rng;
 
-use crate::{
+use crate::geometry::{
     Ray,
     Vector,
     Point

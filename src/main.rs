@@ -1,11 +1,11 @@
 use walnut::{
-    Image,
+    Sensor,
     Color,
 };
 
 fn main() {
 
-    let mut image = Box::new(Image::constant(Color::new(0.0, 1.0, 0.0), 800, 600));
+    let mut image = Box::new(Sensor::constant(Color::new(0.0, 1.0, 0.0), 800, 600));
 
     for i in 0..image.width() {
         let pixel = image.get_mut(i, 200).unwrap();

@@ -12,20 +12,18 @@ fn main() {
 
     for i in 0..800 {
         for j in 0..800 {
-            match camera.sample_ray(i, j) {
-                Some(ray) => {
-                    match sphere.intersect(&ray) {
-                        Some(si) => {
-                            if let Some(pixel) = camera.get_sensor_mut().get_mut(i, j){
-                                let n = si.normal;
-                                *pixel = Color::new(n.x, n.y, n.z);
-                            }
-                        },
-                        None => continue,
-                    }
-                },
-                None => continue,
+            let Some(ray) = camera.sample_ray(i, j) else {
+                continue
             };
+            
+            let Some(si) = sphere.intersect(&ray) else {
+                continue
+            };
+
+            if let Some(pixel) = camera.get_sensor_mut().get_mut(i, j){
+                let n = si.normal;
+                *pixel = Color::new(n.x, n.y, n.z);
+            }
         }
     }
 

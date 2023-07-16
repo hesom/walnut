@@ -26,7 +26,7 @@ pub struct PinholeCamera {
 }
 
 pub trait Camera {
-    fn get_sensor(&self) -> &Sensor;
+    fn get_sensor_mut(&mut self) -> &mut Sensor;
     fn sample_ray(&self, i: usize, j: usize) -> Option<Ray>;
 }
 
@@ -40,8 +40,8 @@ impl PinholeCamera {
 }
 
 impl Camera for PinholeCamera {
-    fn get_sensor(&self) -> &Sensor{
-        &self.sensor
+    fn get_sensor_mut(&mut self) -> &mut Sensor{
+        &mut self.sensor
     }
 
     fn sample_ray(&self, i: usize, j: usize) -> Option<Ray> {
@@ -56,11 +56,11 @@ impl Camera for PinholeCamera {
         let jitter_v: f32 = rng.gen();
 
         // pixel coord to normalized coord in [0, 1]
-        let u = (i as f32 / (self.sensor.width - 1) as f32) + jitter_u;
-        let v = (j as f32 / (self.sensor.height - 1) as f32) + jitter_v;
+        let u = (i as f32 + jitter_u) / (self.sensor.width + 1) as f32;
+        let v = (j as f32 + jitter_v) / (self.sensor.height + 1) as f32;
 
         let u = (2.0 * u - 1.0) * aspect_ratio * f32::tan(self.fov / 2.0);
-        let v = (1.0 - 2.0 * v) * f32::tanh(self.fov / 2.0);
+        let v = (1.0 - 2.0 * v) * f32::tan(self.fov / 2.0);
 
         Some(Ray {
             origin: Point { x: 0.0, y: 0.0, z: 0.0 },

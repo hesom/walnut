@@ -172,7 +172,7 @@ impl Shape for Sphere {
 
         let discriminant = f32::powi(dot(u, o - c), 2) - (norm2(o - c) - r*r);
         
-        if discriminant < 0.0{
+        if discriminant < 0.0 {
             return None
         }
         

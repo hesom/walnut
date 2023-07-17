@@ -1,5 +1,6 @@
 use image::ImageResult;
 use rand::Rng;
+use core::cell::Cell;
 
 use crate::geometry::{
     Ray,
@@ -14,8 +15,13 @@ pub struct Color {
     b: f32,
 }
 
+pub struct Pixel {
+    pub position: (usize, usize),
+    pub color: Cell<Color>,
+}
+
 pub struct Sensor {
-    pixels: Vec<Color>,
+    pixels: Vec<Pixel>,
     width: usize,
     height: usize,
 }
@@ -27,6 +33,9 @@ pub struct PinholeCamera {
 
 pub trait Camera {
     fn get_sensor_mut(&mut self) -> &mut Sensor;
+    fn get_sensor(&self) -> &Sensor;
+    fn get_pixels_mut(&mut self) -> &mut Vec<Pixel>;
+    fn get_pixels(&self) -> &Vec<Pixel>;
     fn sample_ray(&self, i: usize, j: usize) -> Option<Ray>;
 }
 
@@ -42,6 +51,18 @@ impl PinholeCamera {
 impl Camera for PinholeCamera {
     fn get_sensor_mut(&mut self) -> &mut Sensor{
         &mut self.sensor
+    }
+
+    fn get_sensor(&self) -> &Sensor {
+        &self.sensor
+    }
+
+    fn get_pixels_mut(&mut self) -> &mut Vec<Pixel> {
+        &mut self.sensor.pixels
+    }
+
+    fn get_pixels(&self) -> &Vec<Pixel> {
+        &self.sensor.pixels
     }
 
     fn sample_ray(&self, i: usize, j: usize) -> Option<Ray> {
@@ -84,9 +105,13 @@ impl Color {
 impl Sensor {
     pub fn constant(color: Color, width: usize, height: usize) -> Sensor {
         let mut pixels = Vec::with_capacity(width * height);
-        for _ in 0..width {
-            for _ in 0..height {
-                pixels.push(color.clone());
+        for j in 0..height {
+            for i in 0..width {
+                let pixel = Pixel {
+                    position: (i, j),
+                    color: Cell::new(color.clone()),
+                };
+                pixels.push(pixel);
             }
         }
 
@@ -101,17 +126,17 @@ impl Sensor {
         Sensor::constant(Color { r: 0.0, g: 0.0, b: 0.0}, width, height)
     }
 
-    pub fn clear(&mut self) {
-        for pixel in self.pixels.iter_mut() {
-            *pixel = Color { r: 0.0, g: 0.0, b: 0.0 };
+    pub fn clear(&self) {
+        for pixel in self.pixels.iter() {
+            pixel.color.set(Color { r: 0.0, g: 0.0, b: 0.0 });
         }
     }
 
     pub fn readout(&self) -> Vec<u8> {
         self.pixels
             .iter()
-            .map(|color| {
-                let col = color.to_bytes();
+            .map(|Pixel{color, ..}| {
+                let col = color.get().to_bytes();
                 vec![col.0, col.1, col.2]
             })
             .flatten()
@@ -128,14 +153,14 @@ impl Sensor {
         )
     }
 
-    pub fn get_mut(&mut self, i: usize, j: usize) -> Option<&mut Color> {
+    pub fn get_mut(&mut self, i: usize, j: usize) -> Option<&mut Pixel> {
         if !self.inside(i, j){
             return None
         }
         self.pixels.get_mut(j * self.width + i)
     }
 
-    pub fn get(&self, i: usize, j: usize) -> Option<&Color> {
+    pub fn get(&self, i: usize, j: usize) -> Option<&Pixel> {
         if !self.inside(i, j){
             return None
         }
@@ -183,13 +208,13 @@ mod tests {
 
     #[test]
     fn clears() {
-        let mut sensor = Sensor::constant(Color{r: 1.0, g: 1.0, b: 1.0}, 10, 20);
+        let sensor = Sensor::constant(Color{r: 1.0, g: 1.0, b: 1.0}, 10, 20);
         sensor.clear();
 
         for pixel in sensor.pixels {
-            assert_eq!(pixel.r, 0.0);
-            assert_eq!(pixel.g, 0.0);
-            assert_eq!(pixel.b, 0.0);
+            assert_eq!(pixel.color.get().r, 0.0);
+            assert_eq!(pixel.color.get().g, 0.0);
+            assert_eq!(pixel.color.get().b, 0.0);
         }
     }
 

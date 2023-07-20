@@ -1,9 +1,4 @@
-use std::ops::{
-    Add,
-    Neg,
-    Sub,
-    Mul,
-};
+use std::ops::{Add, Mul, Neg, Sub};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Point {
@@ -34,7 +29,6 @@ pub struct Sphere {
     pub center: Point,
     pub radius: f32,
 }
-
 
 pub trait Shape {
     fn intersect(&self, ray: &Ray) -> Option<SurfaceInteraction>;
@@ -95,7 +89,6 @@ impl Mul<Vector> for f32 {
     }
 }
 
-
 impl Sub<Point> for Point {
     type Output = Vector;
     fn sub(self, rhs: Point) -> Self::Output {
@@ -152,7 +145,7 @@ impl Neg for Point {
 }
 
 pub fn dot(a: Vector, b: Vector) -> f32 {
-    a.x*b.x + a.y*b.y + a.z * b.z
+    a.x * b.x + a.y * b.y + a.z * b.z
 }
 
 pub fn norm(a: Vector) -> f32 {
@@ -170,18 +163,21 @@ impl Shape for Sphere {
         let c = self.center;
         let r = self.radius;
 
-        let discriminant = f32::powi(dot(u, o - c), 2) - (norm2(o - c) - r*r);
-        
+        let discriminant = f32::powi(dot(u, o - c), 2) - (norm2(o - c) - r * r);
+
         if discriminant < 0.0 {
-            return None
+            return None;
         }
-        
+
         let t = -dot(u, o - c) - f32::sqrt(discriminant);
-        
-        let intersection = o + t*u;
+
+        let intersection = o + t * u;
         let normal = (intersection - c).normalize();
 
-        Some(SurfaceInteraction { position: intersection, normal })
+        Some(SurfaceInteraction {
+            position: intersection,
+            normal,
+        })
     }
 }
 
@@ -191,48 +187,123 @@ mod tests {
 
     #[test]
     fn it_adds() {
-        let v = Vector {x: 1.0, y: 2.0, z: 3.0};
-        let w = Vector {x: 0.0, y: 1.0, z: -3.0};
+        let v = Vector {
+            x: 1.0,
+            y: 2.0,
+            z: 3.0,
+        };
+        let w = Vector {
+            x: 0.0,
+            y: 1.0,
+            z: -3.0,
+        };
         let res = v + w;
-        assert_eq!(res, Vector { x: 1.0, y: 3.0, z: 0.0 });
+        assert_eq!(
+            res,
+            Vector {
+                x: 1.0,
+                y: 3.0,
+                z: 0.0
+            }
+        );
 
-        let p = Point { x: 0.0, y: 1.0, z: -3.0};
+        let p = Point {
+            x: 0.0,
+            y: 1.0,
+            z: -3.0,
+        };
         let res = v + p;
-        assert_eq!(res, Point { x: 1.0, y: 3.0, z: 0.0 });
+        assert_eq!(
+            res,
+            Point {
+                x: 1.0,
+                y: 3.0,
+                z: 0.0
+            }
+        );
 
         let res = p + v;
-        assert_eq!(res, Point { x: 1.0, y: 3.0, z: 0.0 });
+        assert_eq!(
+            res,
+            Point {
+                x: 1.0,
+                y: 3.0,
+                z: 0.0
+            }
+        );
     }
 
     #[test]
     fn it_subtracts() {
-        let v = Vector {x: 1.0, y: 2.0, z: 3.0};
-        let w = Vector {x: 0.0, y: 1.0, z: -3.0};
+        let v = Vector {
+            x: 1.0,
+            y: 2.0,
+            z: 3.0,
+        };
+        let w = Vector {
+            x: 0.0,
+            y: 1.0,
+            z: -3.0,
+        };
         let res = v - w;
-        assert_eq!(res, Vector { x: 1.0, y: 1.0, z: 6.0 });
+        assert_eq!(
+            res,
+            Vector {
+                x: 1.0,
+                y: 1.0,
+                z: 6.0
+            }
+        );
     }
 
     #[test]
     fn it_intersects() {
-        let center = Point {x: 0.0, y: 5.0, z: 0.0};
+        let center = Point {
+            x: 0.0,
+            y: 5.0,
+            z: 0.0,
+        };
         let radius = 3.0;
 
         let sphere = Sphere { center, radius };
 
         let ray = Ray {
-            origin: Point { x: 0.0, y: -1.0, z: 0.0 },
-            direction: Vector { x: 0.0, y: 1.0, z: 0.0 },
+            origin: Point {
+                x: 0.0,
+                y: -1.0,
+                z: 0.0,
+            },
+            direction: Vector {
+                x: 0.0,
+                y: 1.0,
+                z: 0.0,
+            },
         };
 
         let si = sphere.intersect(&ray);
         assert!(si.is_some());
         let position = si.unwrap().position;
 
-        assert_eq!(position, Point{ x: 0.0, y: 2.0, z: 0.0});
+        assert_eq!(
+            position,
+            Point {
+                x: 0.0,
+                y: 2.0,
+                z: 0.0
+            }
+        );
 
         let ray = Ray {
-            origin: Point { x: 0.0, y: -1.0, z: 0.0 },
-            direction: Vector { x: 1.0, y: 0.0, z: 0.0 },
+            origin: Point {
+                x: 0.0,
+                y: -1.0,
+                z: 0.0,
+            },
+            direction: Vector {
+                x: 1.0,
+                y: 0.0,
+                z: 0.0,
+            },
         };
 
         let si = sphere.intersect(&ray);

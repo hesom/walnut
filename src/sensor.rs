@@ -1,12 +1,8 @@
+use core::cell::Cell;
 use image::ImageResult;
 use rand::Rng;
-use core::cell::Cell;
 
-use crate::geometry::{
-    Ray,
-    Vector,
-    Point
-};
+use crate::geometry::{Point, Ray, Vector};
 
 #[derive(Clone, Copy, Debug)]
 pub struct Color {
@@ -40,16 +36,13 @@ pub trait Camera {
 }
 
 impl PinholeCamera {
-    pub fn new(sensor: Sensor, fov: f32) -> PinholeCamera{
-        PinholeCamera {
-            sensor,
-            fov,
-        }
+    pub fn new(sensor: Sensor, fov: f32) -> PinholeCamera {
+        PinholeCamera { sensor, fov }
     }
 }
 
 impl Camera for PinholeCamera {
-    fn get_sensor_mut(&mut self) -> &mut Sensor{
+    fn get_sensor_mut(&mut self) -> &mut Sensor {
         &mut self.sensor
     }
 
@@ -66,8 +59,8 @@ impl Camera for PinholeCamera {
     }
 
     fn sample_ray(&self, i: usize, j: usize) -> Option<Ray> {
-        if !self.sensor.inside(i, j){
-            return None
+        if !self.sensor.inside(i, j) {
+            return None;
         }
 
         let aspect_ratio = self.sensor.aspect();
@@ -84,8 +77,17 @@ impl Camera for PinholeCamera {
         let v = (1.0 - 2.0 * v) * f32::tan(self.fov / 2.0);
 
         Some(Ray {
-            origin: Point { x: 0.0, y: 0.0, z: 0.0 },
-            direction: Vector { x: u, y: v, z: -1.0}.normalize(),
+            origin: Point {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+            },
+            direction: Vector {
+                x: u,
+                y: v,
+                z: -1.0,
+            }
+            .normalize(),
         })
     }
 }
@@ -123,19 +125,31 @@ impl Sensor {
     }
 
     pub fn zero(width: usize, height: usize) -> Sensor {
-        Sensor::constant(Color { r: 0.0, g: 0.0, b: 0.0}, width, height)
+        Sensor::constant(
+            Color {
+                r: 0.0,
+                g: 0.0,
+                b: 0.0,
+            },
+            width,
+            height,
+        )
     }
 
     pub fn clear(&self) {
         for pixel in self.pixels.iter() {
-            pixel.color.set(Color { r: 0.0, g: 0.0, b: 0.0 });
+            pixel.color.set(Color {
+                r: 0.0,
+                g: 0.0,
+                b: 0.0,
+            });
         }
     }
 
     pub fn readout(&self) -> Vec<u8> {
         self.pixels
             .iter()
-            .map(|Pixel{color, ..}| {
+            .map(|Pixel { color, .. }| {
                 let col = color.get().to_bytes();
                 vec![col.0, col.1, col.2]
             })
@@ -154,15 +168,15 @@ impl Sensor {
     }
 
     pub fn get_mut(&mut self, i: usize, j: usize) -> Option<&mut Pixel> {
-        if !self.inside(i, j){
-            return None
+        if !self.inside(i, j) {
+            return None;
         }
         self.pixels.get_mut(j * self.width + i)
     }
 
     pub fn get(&self, i: usize, j: usize) -> Option<&Pixel> {
-        if !self.inside(i, j){
-            return None
+        if !self.inside(i, j) {
+            return None;
         }
         self.pixels.get(j * self.width + i)
     }
@@ -208,7 +222,15 @@ mod tests {
 
     #[test]
     fn clears() {
-        let sensor = Sensor::constant(Color{r: 1.0, g: 1.0, b: 1.0}, 10, 20);
+        let sensor = Sensor::constant(
+            Color {
+                r: 1.0,
+                g: 1.0,
+                b: 1.0,
+            },
+            10,
+            20,
+        );
         sensor.clear();
 
         for pixel in sensor.pixels {
@@ -225,7 +247,14 @@ mod tests {
 
         let ray = camera.sample_ray(0, 0).unwrap();
 
-        assert_eq!(ray.origin, Point {x: 0.0, y: 0.0, z: 0.0});
+        assert_eq!(
+            ray.origin,
+            Point {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0
+            }
+        );
         assert!(ray.direction.z < 0.0);
     }
 }

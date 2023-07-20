@@ -1,4 +1,4 @@
-mod sensor;
 mod geometry;
-pub use sensor::*;
+mod sensor;
 pub use geometry::*;
+pub use sensor::*;

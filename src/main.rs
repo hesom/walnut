@@ -22,10 +22,11 @@ fn main() {
             .filter_map(|_| camera.sample_ray(i, j))
             .filter_map(|ray| sphere.intersect(&ray))
             .map(|si| si.normal)
-            .reduce(|normal, accum| accum + (1.0 / spp as f32) * normal);
+            .reduce(|accum, normal| accum + normal);
 
         if let Some(n) = n {
-            pixel.color.set(Color::new(n.x, n.y, n.z));
+            let f = 1.0 / spp as f32;
+            pixel.color.set(Color::new(f*n.x, f*n.y, f*n.z));
         }
     }
 

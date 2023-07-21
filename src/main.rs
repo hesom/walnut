@@ -2,6 +2,7 @@ use walnut::*;
 
 use std::thread;
 use std::sync::Arc;
+use std::time::Instant;
 
 fn main() {
     let spp = 255;
@@ -26,6 +27,7 @@ fn main() {
 
     let chunks = camera.get_pixels().chunks(num_cores);
 
+    let timer = Instant::now();
     thread::scope(|scope|{
         for chunk in chunks {
             let camera = camera.clone();
@@ -49,6 +51,7 @@ fn main() {
             });
         }
     });
+    println!("Finished in {:.3}s", timer.elapsed().as_secs_f32());
 
     camera
         .get_sensor()

@@ -1,6 +1,6 @@
-use core::cell::Cell;
 use image::ImageResult;
 use rand::Rng;
+use std::sync::RwLock;
 
 use crate::geometry::{Point, Ray, Vector};
 
@@ -13,7 +13,7 @@ pub struct Color {
 
 pub struct Pixel {
     pub position: (usize, usize),
-    pub color: Cell<Color>,
+    pub color: RwLock<Color>,
 }
 
 pub struct Sensor {
@@ -111,7 +111,7 @@ impl Sensor {
             for i in 0..width {
                 let pixel = Pixel {
                     position: (i, j),
-                    color: Cell::new(color.clone()),
+                    color: RwLock::new(color.clone()),
                 };
                 pixels.push(pixel);
             }
@@ -138,11 +138,11 @@ impl Sensor {
 
     pub fn clear(&self) {
         for pixel in self.pixels.iter() {
-            pixel.color.set(Color {
+            *pixel.color.write().unwrap() = Color {
                 r: 0.0,
                 g: 0.0,
                 b: 0.0,
-            });
+            };
         }
     }
 
@@ -150,7 +150,7 @@ impl Sensor {
         self.pixels
             .iter()
             .map(|Pixel { color, .. }| {
-                let col = color.get().to_bytes();
+                let col = color.read().unwrap().to_bytes();
                 vec![col.0, col.1, col.2]
             })
             .flatten()
@@ -234,9 +234,10 @@ mod tests {
         sensor.clear();
 
         for pixel in sensor.pixels {
-            assert_eq!(pixel.color.get().r, 0.0);
-            assert_eq!(pixel.color.get().g, 0.0);
-            assert_eq!(pixel.color.get().b, 0.0);
+            let col = pixel.color.read().unwrap();
+            assert_eq!(col.r, 0.0);
+            assert_eq!(col.g, 0.0);
+            assert_eq!(col.b, 0.0);
         }
     }
 

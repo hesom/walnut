@@ -1,4 +1,5 @@
 use std::ops::{Add, Mul, Neg, Sub};
+use crate::material::*;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Point {
@@ -20,14 +21,17 @@ pub struct Ray {
     pub direction: Vector,
 }
 
-pub struct SurfaceInteraction {
+pub struct SurfaceInteraction<'a> {
     pub position: Point,
     pub normal: Vector,
+    pub material: &'a Box<dyn Bsdf>,
+    pub wi: Vector,
 }
 
 pub struct Sphere {
     pub center: Point,
     pub radius: f32,
+    pub material: Box<dyn Bsdf>,
 }
 
 pub trait Shape {
@@ -156,6 +160,16 @@ pub fn norm2(a: Vector) -> f32 {
     dot(a, a)
 }
 
+pub fn reflect(a: Vector, n: Vector) -> Vector {
+    a - 2.0*dot(a, n) * n
+}
+
+impl Sphere {
+    pub fn new(center: Point, radius: f32, material: Box<dyn Bsdf>) -> Sphere {
+        Sphere { center, radius, material }
+    }
+}
+
 impl Shape for Sphere {
     fn intersect(&self, ray: &Ray) -> Option<SurfaceInteraction> {
         let o = ray.origin;
@@ -177,6 +191,8 @@ impl Shape for Sphere {
         Some(SurfaceInteraction {
             position: intersection,
             normal,
+            wi: -u,
+            material: &self.material
         })
     }
 }
@@ -265,7 +281,7 @@ mod tests {
         };
         let radius = 3.0;
 
-        let sphere = Sphere { center, radius };
+        let sphere = Sphere { center, radius, material: Box::new(BlackBody{}) };
 
         let ray = Ray {
             origin: Point {

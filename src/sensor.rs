@@ -1,3 +1,4 @@
+use std::ops::{Add, Mul};
 use image::ImageResult;
 use rand::Rng;
 use std::sync::RwLock;
@@ -25,6 +26,7 @@ pub struct Sensor {
 pub struct PinholeCamera {
     sensor: Sensor,
     fov: f32,
+    position: Point,
 }
 
 pub trait Camera {
@@ -37,7 +39,15 @@ pub trait Camera {
 
 impl PinholeCamera {
     pub fn new(sensor: Sensor, fov: f32) -> PinholeCamera {
-        PinholeCamera { sensor, fov }
+        PinholeCamera {
+            sensor,
+            fov,
+            position: Point {x: 0.0, y:0.0, z: 0.0 },
+        }
+    }
+
+    pub fn position(&self) -> Point {
+        self.position
     }
 }
 
@@ -101,6 +111,47 @@ impl Color {
         let g = (self.g * 255.) as u8;
         let b = (self.b * 255.) as u8;
         (r, g, b)
+    }
+
+    pub fn clamp(&self) -> Color {
+        Color {
+            r: f32::clamp(self.r, 0.0, 1.0),
+            g: f32::clamp(self.g, 0.0, 1.0),
+            b: f32::clamp(self.b, 0.0, 1.0),
+        }
+    }
+}
+
+impl Add for Color {
+    type Output = Color;
+    fn add(self, rhs: Self) -> Self::Output {
+        Color {
+            r: self.r + rhs.r,
+            g: self.g + rhs.g,
+            b: self.b + rhs.b,
+        }
+    }
+}
+
+impl Mul<Color> for f32 {
+    type Output = Color;
+    fn mul(self, rhs: Color) -> Self::Output {
+        Color {
+            r: self * rhs.r,
+            g: self * rhs.g,
+            b: self * rhs.b,
+        }
+    }
+}
+
+impl Mul<Color> for Color {
+    type Output = Color;
+    fn mul(self, rhs: Color) -> Self::Output {
+        Color {
+            r: self.r * rhs.r,
+            g: self.g * rhs.g,
+            b: self.b * rhs.b,
+        }
     }
 }
 

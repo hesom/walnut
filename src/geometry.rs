@@ -34,8 +34,47 @@ pub struct Sphere {
     pub material: Box<dyn Bsdf>,
 }
 
-pub trait Shape {
+pub trait Shape : Send + Sync {
     fn intersect(&self, ray: &Ray) -> Option<SurfaceInteraction>;
+}
+
+pub struct Scene {
+    pub shapes: Vec<Box<dyn Shape>>,
+}
+
+impl Scene {
+    pub fn closest_hit(&self, ray: &Ray) -> Option<SurfaceInteraction> {
+       let mut hits : Vec<_> = self.shapes.iter()
+           .filter_map(|shape| shape.intersect(&ray))
+           .collect();
+      
+        if hits.is_empty() {
+            return None
+        }
+
+        hits.sort_by(|a, b| {
+            let dist1 = norm2(ray.origin - a.position);
+            let dist2 = norm2(ray.origin - b.position);
+            dist1.partial_cmp(&dist2).unwrap()
+        });
+
+        let closest = hits.get(0)?;
+
+        Some(SurfaceInteraction {
+            position: closest.position,
+            normal: closest.normal,
+            material: closest.material,
+            wi: closest.wi,
+        })
+    }
+
+    pub fn new() -> Scene {
+        Scene { shapes: Vec::new() }
+    }
+
+    pub fn add(&mut self, shape: Box<dyn Shape>) {
+        self.shapes.push(shape);
+    }
 }
 
 impl Vector {
@@ -184,6 +223,9 @@ impl Shape for Sphere {
         }
 
         let t = -dot(u, o - c) - f32::sqrt(discriminant);
+        if t < 0.0 {
+            return None
+        }
 
         let intersection = o + t * u;
         let normal = (intersection - c).normalize();

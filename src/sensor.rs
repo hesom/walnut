@@ -41,7 +41,7 @@ impl PinholeCamera {
     pub fn new(sensor: Sensor, fov: f32) -> PinholeCamera {
         PinholeCamera {
             sensor,
-            fov,
+            fov: fov.to_radians(),
             position: Point {x: 0.0, y:0.0, z: 0.0 },
         }
     }

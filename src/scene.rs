@@ -4,14 +4,14 @@ use crate::math::*;
 pub struct SurfaceInteraction<'a> {
     pub position: Point,
     pub normal: Vector,
-    pub material: &'a Box<dyn Bsdf>,
+    pub material: &'a Box<dyn Material>,
     pub wi: Vector,
 }
 
 pub struct Sphere {
     pub center: Point,
     pub radius: f32,
-    pub material: Box<dyn Bsdf>,
+    pub material: Box<dyn Material>,
 }
 
 pub trait Shape : Send + Sync {
@@ -58,7 +58,7 @@ impl Scene {
 }
 
 impl Sphere {
-    pub fn new(center: Point, radius: f32, material: Box<dyn Bsdf>) -> Sphere {
+    pub fn new(center: Point, radius: f32, material: Box<dyn Material>) -> Sphere {
         Sphere { center, radius, material }
     }
 }

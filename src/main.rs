@@ -88,7 +88,7 @@ fn main() {
                                 return Color::new(0.0, 0.0, 0.0);
                             }
 
-                            let bsdf_sample = si.material.eval(&si, l);
+                            let bsdf_sample = si.material.bsdf(&si, l);
 
                             (bsdf_sample.radiance * light_sample.radiance).clamp()
 

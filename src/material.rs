@@ -7,8 +7,8 @@ pub struct BsdfSample {
     pub weight: f32,
 }
 
-pub trait Bsdf : Send + Sync {
-    fn eval(&self, si: &SurfaceInteraction, wo: Vector) -> BsdfSample;
+pub trait Material : Send + Sync {
+    fn bsdf(&self, si: &SurfaceInteraction, wo: Vector) -> BsdfSample;
 }
 
 pub struct BlackBody {}
@@ -19,8 +19,8 @@ pub struct PhongMaterial {
     pub exponent: f32,
 }
 
-impl Bsdf for BlackBody {
-    fn eval(&self, _si: &SurfaceInteraction, _wo: Vector) -> BsdfSample {
+impl Material for BlackBody {
+    fn bsdf(&self, _si: &SurfaceInteraction, _wo: Vector) -> BsdfSample {
         BsdfSample {
             radiance: Color::new(0.0, 0.0, 0.0),
             weight: 1.0,
@@ -28,8 +28,8 @@ impl Bsdf for BlackBody {
     }
 }
 
-impl Bsdf for PhongMaterial {
-    fn eval(&self, si: &SurfaceInteraction, wo: Vector) -> BsdfSample {
+impl Material for PhongMaterial {
+    fn bsdf(&self, si: &SurfaceInteraction, wo: Vector) -> BsdfSample {
         let n = si.normal;
         let r_v = -reflect(si.wi, n);
         let diffuse = f32::max(dot(n, wo), 0.0) * self.diffuse;

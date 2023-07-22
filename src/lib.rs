@@ -1,8 +1,11 @@
-mod geometry;
+mod scene;
 mod sensor;
 mod emitter;
 mod material;
-pub use geometry::*;
+mod math;
+
+pub use scene::*;
 pub use sensor::*;
 pub use emitter::*;
 pub use material::*;
+pub use math::*;

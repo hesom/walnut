@@ -3,7 +3,7 @@ use image::ImageResult;
 use rand::Rng;
 use std::sync::RwLock;
 
-use crate::geometry::{Point, Ray, Vector};
+use crate::math::*;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Color {
@@ -29,7 +29,7 @@ pub struct PinholeCamera {
     position: Point,
 }
 
-pub trait Camera {
+pub trait Camera : Send + Sync {
     fn get_sensor_mut(&mut self) -> &mut Sensor;
     fn get_sensor(&self) -> &Sensor;
     fn get_pixels_mut(&mut self) -> &mut Vec<Pixel>;

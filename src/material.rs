@@ -1,5 +1,6 @@
 use crate::sensor::Color;
-use crate::geometry::*;
+use crate::scene::*;
+use crate::math::*;
 
 pub struct BsdfSample {
     pub radiance: Color,

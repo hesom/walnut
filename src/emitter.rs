@@ -1,5 +1,5 @@
-use crate::geometry::*;
 use crate::sensor::Color;
+use crate::math::*;
 
 pub trait Emitter {
     fn sample(&self) -> EmitterSample;

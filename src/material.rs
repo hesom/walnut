@@ -8,29 +8,36 @@ pub struct BsdfSample {
     pub pdf: f32,
 }
 
+fn uniform_hemisphere_sample(si: &SurfaceInteraction) -> Vector {
+    let (u, v, w) = si.local_frame();
+
+    let mut rng = rand::thread_rng();
+    let e1 : f32 = rng.gen();
+    let e2 : f32 = rng.gen();
+
+    let r = f32::sqrt(1.0 - e1*e1);
+    let phi = 2.0 * std::f32::consts::PI * e2;
+
+    f32::cos(phi) * r * u + f32::sin(phi) * r * v + e1 * w
+}
+
 fn cosine_weighted_hemisphere_sample(si: &SurfaceInteraction) -> Vector {
-    let w = si.normal;
-        let axis = match f32::abs(w.x) > 0.1 {
-            true => Vector {x: 0.0, y: 1.0, z: 0.0},
-            false => Vector {x: 1.0, y: 0.0, z: 0.0},
-        };
-        let u = cross(axis, w).normalize();
-        let v = cross(w, u);
+    let (u, v, w) = si.local_frame();
 
-        let mut rng = rand::thread_rng();
-        let e1 : f32 = rng.gen();
-        let e2 : f32 = rng.gen();
+    let mut rng = rand::thread_rng();
+    let e1 : f32 = rng.gen();
+    let e2 : f32 = rng.gen();
 
-        let s = f32::sqrt(1.0 - e1 * e1);
-        let phi = 2.0 * std::f32::consts::PI * e2;
+    let r = f32::sqrt(e1);
+    let phi = 2.0 * std::f32::consts::PI * e2;
 
-        f32::cos(phi) * s * u + f32::sin(phi) * s * v + e1 * w
+    f32::cos(phi) * r * u + f32::sin(phi) * r * v + f32::sqrt(f32::max(0.0, 1.0 - e1)) * w
 }
 
 pub trait Material : Send + Sync {
     fn bsdf_eval(&self, si: &SurfaceInteraction, wo: Vector) -> BsdfSample;
     fn bsdf_sample(&self, si: &SurfaceInteraction) -> Vector;
-    fn bsdf_pdf(&self, si: &SurfaceInteraction, wi: Vector) -> f32;
+    fn bsdf_pdf(&self, si: &SurfaceInteraction, wo: Vector) -> f32;
 }
 
 pub struct BlackBody {}
@@ -57,8 +64,8 @@ impl Material for BlackBody {
         cosine_weighted_hemisphere_sample(&si)
     }
 
-    fn bsdf_pdf(&self, _si: &SurfaceInteraction, _wi: Vector) -> f32 {
-        1.0 / (2.0 * std::f32::consts::PI)
+    fn bsdf_pdf(&self, si: &SurfaceInteraction, wo: Vector) -> f32 {
+        dot(si.normal, wo) / std::f32::consts::PI
     }
 }
 
@@ -76,10 +83,10 @@ impl Material for PhongMaterial {
     }
 
     fn bsdf_sample(&self, si: &SurfaceInteraction) -> Vector {
-        cosine_weighted_hemisphere_sample(&si)
+        uniform_hemisphere_sample(&si)
     }
 
-    fn bsdf_pdf(&self, _si: &SurfaceInteraction, _wi: Vector) -> f32 {
+    fn bsdf_pdf(&self, _si: &SurfaceInteraction, _wo: Vector) -> f32 {
         1.0 / (2.0 * std::f32::consts::PI)
     }
 }
@@ -96,7 +103,7 @@ impl Material for DiffuseMaterial {
         cosine_weighted_hemisphere_sample(&si)
     }
 
-    fn bsdf_pdf(&self, _si: &SurfaceInteraction, _wi: Vector) -> f32 {
-        1.0 / (2.0 * std::f32::consts::PI)
+    fn bsdf_pdf(&self, si: &SurfaceInteraction, wo: Vector) -> f32 {
+        dot(si.normal, wo) / std::f32::consts::PI
     }
 }

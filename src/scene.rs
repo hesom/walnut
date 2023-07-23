@@ -109,28 +109,16 @@ impl Shape for Sphere {
 }
 
 impl<'a> SurfaceInteraction<'a> {
-    pub fn to_local_frame(&self, v: Vector) -> Vector {
+    pub fn local_frame(&self) -> (Vector, Vector, Vector) {
         let w = self.normal;
-        let u = cross(Vector{ x: 0.0, y: 1.0, z: 0.0}, w).normalize();
-        let vv = cross(w, u);
+        let axis = match f32::abs(w.x) > 0.1 {
+            true => Vector {x: 0.0, y: 1.0, z: 0.0},
+            false => Vector {x: 1.0, y: 0.0, z: 0.0},
+        };
+        let u = cross(axis, w).normalize();
+        let v = cross(w, u);
 
-        Vector {
-            x: dot(vv, v),
-            y: dot(u, v),
-            z: dot(w, v),
-        }
-    }
-
-    pub fn to_global_frame(&self, v: Vector) -> Vector {
-        let w = self.normal;
-        let u = cross(Vector{ x: 0.0, y: 1.0, z: 0.0}, w).normalize();
-        let vv = cross(w, u);
-
-        Vector {
-            x: v.x * u.x + v.y * vv.x + v.z * w.x,
-            y: v.x * u.y + v.y * vv.y + v.z * w.y,
-            z: v.x * u.z + v.y * vv.z + v.z * w.z,
-        }
+        (u, v, w)
     }
 }
 

@@ -38,6 +38,7 @@ pub trait Material : Send + Sync {
     fn bsdf_eval(&self, si: &SurfaceInteraction, wo: Vector) -> BsdfSample;
     fn bsdf_sample(&self, si: &SurfaceInteraction) -> Vector;
     fn bsdf_pdf(&self, si: &SurfaceInteraction, wo: Vector) -> f32;
+    fn is_delta_reflector(&self) -> bool;
 }
 
 pub struct BlackBody {}
@@ -67,6 +68,10 @@ impl Material for BlackBody {
     fn bsdf_pdf(&self, si: &SurfaceInteraction, wo: Vector) -> f32 {
         dot(si.normal, wo) / std::f32::consts::PI
     }
+
+    fn is_delta_reflector(&self) -> bool {
+        false
+    }
 }
 
 impl Material for PhongMaterial {
@@ -89,6 +94,10 @@ impl Material for PhongMaterial {
     fn bsdf_pdf(&self, _si: &SurfaceInteraction, _wo: Vector) -> f32 {
         1.0 / (2.0 * std::f32::consts::PI)
     }
+
+    fn is_delta_reflector(&self) -> bool {
+        false
+    }
 }
 
 impl Material for DiffuseMaterial {    
@@ -105,5 +114,9 @@ impl Material for DiffuseMaterial {
 
     fn bsdf_pdf(&self, si: &SurfaceInteraction, wo: Vector) -> f32 {
         dot(si.normal, wo) / std::f32::consts::PI
+    }
+
+    fn is_delta_reflector(&self) -> bool {
+        false
     }
 }

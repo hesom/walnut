@@ -146,6 +146,14 @@ pub fn reflect(a: Vector, n: Vector) -> Vector {
     a - 2.0*dot(a, n) * n
 }
 
+pub fn cross(a: Vector, b: Vector) -> Vector {
+    Vector {
+        x: a.y * b.z - a.z * b.y,
+        y: a.z * b.x - a.x * b.z, 
+        z: a.x * b.y - a.y * b.x,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

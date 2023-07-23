@@ -1,43 +1,102 @@
 use crate::sensor::Color;
 use crate::scene::*;
 use crate::math::*;
+use rand::Rng;
 
 pub struct BsdfSample {
     pub radiance: Color,
-    pub weight: f32,
+    pub pdf: f32,
+}
+
+fn cosine_weighted_hemisphere_sample(si: &SurfaceInteraction) -> Vector {
+    let w = si.normal;
+        let axis = match f32::abs(w.x) > 0.1 {
+            true => Vector {x: 0.0, y: 1.0, z: 0.0},
+            false => Vector {x: 1.0, y: 0.0, z: 0.0},
+        };
+        let u = cross(axis, w).normalize();
+        let v = cross(w, u);
+
+        let mut rng = rand::thread_rng();
+        let e1 : f32 = rng.gen();
+        let e2 : f32 = rng.gen();
+
+        let s = f32::sqrt(1.0 - e1 * e1);
+        let phi = 2.0 * std::f32::consts::PI * e2;
+
+        f32::cos(phi) * s * u + f32::sin(phi) * s * v + e1 * w
 }
 
 pub trait Material : Send + Sync {
-    fn bsdf(&self, si: &SurfaceInteraction, wo: Vector) -> BsdfSample;
+    fn bsdf_eval(&self, si: &SurfaceInteraction, wo: Vector) -> BsdfSample;
+    fn bsdf_sample(&self, si: &SurfaceInteraction) -> Vector;
+    fn bsdf_pdf(&self, si: &SurfaceInteraction, wi: Vector) -> f32;
 }
 
 pub struct BlackBody {}
 
 pub struct PhongMaterial {
-    pub diffuse: Color,
+    pub albedo: Color,
     pub specular: Color,
     pub exponent: f32,
 }
 
+pub struct DiffuseMaterial {
+    pub albedo: Color,
+}
+
 impl Material for BlackBody {
-    fn bsdf(&self, _si: &SurfaceInteraction, _wo: Vector) -> BsdfSample {
+    fn bsdf_eval(&self, si: &SurfaceInteraction, wo: Vector) -> BsdfSample {
         BsdfSample {
             radiance: Color::new(0.0, 0.0, 0.0),
-            weight: 1.0,
+            pdf: self.bsdf_pdf(&si, wo),
         }
+    }
+
+    fn bsdf_sample(&self, si: &SurfaceInteraction) -> Vector {
+        cosine_weighted_hemisphere_sample(&si)
+    }
+
+    fn bsdf_pdf(&self, _si: &SurfaceInteraction, _wi: Vector) -> f32 {
+        1.0 / (2.0 * std::f32::consts::PI)
     }
 }
 
 impl Material for PhongMaterial {
-    fn bsdf(&self, si: &SurfaceInteraction, wo: Vector) -> BsdfSample {
+    fn bsdf_eval(&self, si: &SurfaceInteraction, wo: Vector) -> BsdfSample {
         let n = si.normal;
         let r_v = -reflect(si.wi, n);
-        let diffuse = f32::max(dot(n, wo), 0.0) * self.diffuse;
+        let diffuse = (1.0 / std::f32::consts::PI) * f32::max(dot(n, wo), 0.0) * self.albedo;
         let specular = f32::powf(f32::max(dot(r_v, wo), 0.0), self.exponent) * self.specular;
 
         BsdfSample {
             radiance: diffuse + specular,
-            weight: 1.0
+            pdf: self.bsdf_pdf(&si, wo)
         }
+    }
+
+    fn bsdf_sample(&self, si: &SurfaceInteraction) -> Vector {
+        cosine_weighted_hemisphere_sample(&si)
+    }
+
+    fn bsdf_pdf(&self, _si: &SurfaceInteraction, _wi: Vector) -> f32 {
+        1.0 / (2.0 * std::f32::consts::PI)
+    }
+}
+
+impl Material for DiffuseMaterial {    
+    fn bsdf_eval(&self, si: &SurfaceInteraction, wo: Vector) -> BsdfSample {
+        let n = si.normal;
+        let diffuse = (1.0 / std::f32::consts::PI) * f32::max(dot(n, wo), 0.0) * self.albedo;
+
+        BsdfSample { radiance: diffuse, pdf: self.bsdf_pdf(&si, wo) }
+    }
+
+    fn bsdf_sample(&self, si: &SurfaceInteraction) -> Vector {
+        cosine_weighted_hemisphere_sample(&si)
+    }
+
+    fn bsdf_pdf(&self, _si: &SurfaceInteraction, _wi: Vector) -> f32 {
+        1.0 / (2.0 * std::f32::consts::PI)
     }
 }

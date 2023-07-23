@@ -1,7 +1,7 @@
 use crate::sensor::Color;
 use crate::math::*;
 
-pub trait Emitter {
+pub trait Emitter: Sync + Send {
     fn sample(&self) -> EmitterSample;
 }
 

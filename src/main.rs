@@ -5,9 +5,11 @@ use std::sync::Arc;
 use std::time::Instant;
 
 fn main() {
-    let spp = 255;
+    let spp = 1024;
     let sensor = Sensor::zero(800, 800);
     let camera = Arc::new(PinholeCamera::new(sensor, 75.0));
+    let integrator = Arc::new(PathIntegrator::new(16, 4));
+
     let mut scene = Scene::new();
 
     let sphere1 = Sphere::new(
@@ -18,8 +20,8 @@ fn main() {
         },
         1.0,
         Box::new(PhongMaterial{
-            diffuse: Color::new(0.8, 0.0, 0.0),
-            specular: Color::new(1.0, 1.0, 1.0),
+            albedo: Color::new(0.8, 0.0, 0.0),
+            specular: Color::new(0.8, 0.8, 0.8),
             exponent: 10.0,
         }),
     );
@@ -32,25 +34,28 @@ fn main() {
         },
         0.1,
         Box::new(PhongMaterial{
-            diffuse: Color::new(0.0, 0.2, 0.8),
+            albedo: Color::new(0.0, 0.2, 0.8),
             specular: Color::new(1.0, 1.0, 1.0),
             exponent: 25.0,
         }),
     );
 
-    scene.add(Box::new(sphere1));
-    scene.add(Box::new(sphere2));
+    scene.add_shape(Box::new(sphere1));
+    scene.add_shape(Box::new(sphere2));
 
+    
+    let light = PointLight::new(
+        Point{
+            x: 0.5,
+            y: 0.5,
+            z: 0.5,
+        },
+        0.8,
+    );
+
+    scene.add_light(Box::new(light));
+    
     let scene = Arc::new(scene);
-
-    let light = Arc::new(PointLight::new(
-            Point{
-                x: 0.5,
-                y: 0.5,
-                z: 0.5,
-            },
-            0.8,
-            ));
 
     let num_cores = match thread::available_parallelism() {
         Ok(num_cores) => num_cores.get(),
@@ -66,7 +71,7 @@ fn main() {
         for chunk in chunks {
             let camera = camera.clone();
             let scene = scene.clone();
-            let light = light.clone();
+            let integrator = integrator.clone();
             scope.spawn(move || {
                 for pixel in chunk {
                     let (i, j) = pixel.position;
@@ -74,25 +79,7 @@ fn main() {
                     let radiance = (0..spp)
                         .into_iter()
                         .filter_map(|_| camera.sample_ray(i, j))
-                        .filter_map(|ray| scene.closest_hit(&ray))
-                        .map(|si| {
-                            let light_sample = light.sample();
-                            let l = (light_sample.position - si.position).normalize();
-
-                            let shadow_si = scene.closest_hit(&Ray {
-                                origin: si.position + 1e-3*l,
-                                direction: l
-                            });
-
-                            if let Some(_) = shadow_si {
-                                return Color::new(0.0, 0.0, 0.0);
-                            }
-
-                            let bsdf_sample = si.material.bsdf(&si, l);
-
-                            (bsdf_sample.radiance * light_sample.radiance).clamp()
-
-                        })
+                        .map(|ray| integrator.sample_radiance(&ray, &scene))
                         .reduce(|accum, radiance| accum + radiance);
 
                     if let Some(radiance) = radiance {

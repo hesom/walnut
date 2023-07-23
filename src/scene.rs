@@ -1,11 +1,14 @@
 use crate::material::*;
 use crate::math::*;
+use crate::sensor::Color;
+use crate::emitter::Emitter;
 
 pub struct SurfaceInteraction<'a> {
     pub position: Point,
     pub normal: Vector,
     pub material: &'a Box<dyn Material>,
     pub wi: Vector,
+    pub emitter: Option<&'a Box<dyn Emitter>>,
 }
 
 pub struct Sphere {
@@ -20,6 +23,8 @@ pub trait Shape : Send + Sync {
 
 pub struct Scene {
     pub shapes: Vec<Box<dyn Shape>>,
+    pub lights: Vec<Box<dyn Emitter>>,
+    pub background_color: Color,
 }
 
 impl Scene {
@@ -45,15 +50,24 @@ impl Scene {
             normal: closest.normal,
             material: closest.material,
             wi: closest.wi,
+            emitter: None,
         })
     }
 
     pub fn new() -> Scene {
-        Scene { shapes: Vec::new() }
+        Scene {
+            shapes: Vec::new(),
+            lights: Vec::new(),
+            background_color: Color::new(0.2, 0.2, 0.2)
+        }
     }
 
-    pub fn add(&mut self, shape: Box<dyn Shape>) {
+    pub fn add_shape(&mut self, shape: Box<dyn Shape>) {
         self.shapes.push(shape);
+    }
+
+    pub fn add_light(&mut self, light: Box<dyn Emitter>) {
+        self.lights.push(light);
     }
 }
 
@@ -88,8 +102,35 @@ impl Shape for Sphere {
             position: intersection,
             normal,
             wi: -u,
-            material: &self.material
+            material: &self.material,
+            emitter: None,
         })
+    }
+}
+
+impl<'a> SurfaceInteraction<'a> {
+    pub fn to_local_frame(&self, v: Vector) -> Vector {
+        let w = self.normal;
+        let u = cross(Vector{ x: 0.0, y: 1.0, z: 0.0}, w).normalize();
+        let vv = cross(w, u);
+
+        Vector {
+            x: dot(vv, v),
+            y: dot(u, v),
+            z: dot(w, v),
+        }
+    }
+
+    pub fn to_global_frame(&self, v: Vector) -> Vector {
+        let w = self.normal;
+        let u = cross(Vector{ x: 0.0, y: 1.0, z: 0.0}, w).normalize();
+        let vv = cross(w, u);
+
+        Vector {
+            x: v.x * u.x + v.y * vv.x + v.z * w.x,
+            y: v.x * u.y + v.y * vv.y + v.z * w.y,
+            z: v.x * u.z + v.y * vv.z + v.z * w.z,
+        }
     }
 }
 

@@ -6,6 +6,7 @@ use crate::emitter::Emitter;
 pub struct SurfaceInteraction<'a> {
     pub position: Point,
     pub normal: Vector,
+    pub t: f32,
     pub material: &'a Box<dyn Material>,
     pub wi: Vector,
     pub emitter: Option<&'a Box<dyn Emitter>>,
@@ -14,6 +15,12 @@ pub struct SurfaceInteraction<'a> {
 pub struct Sphere {
     pub center: Point,
     pub radius: f32,
+    pub material: Box<dyn Material>,
+}
+
+pub struct InfinitePlane {
+    pub center: Point,
+    pub normal: Vector,
     pub material: Box<dyn Material>,
 }
 
@@ -38,9 +45,7 @@ impl Scene {
         }
 
         hits.sort_by(|a, b| {
-            let dist1 = norm2(ray.origin - a.position);
-            let dist2 = norm2(ray.origin - b.position);
-            dist1.partial_cmp(&dist2).unwrap()
+            a.t.partial_cmp(&b.t).unwrap()
         });
 
         let closest = hits.get(0)?;
@@ -48,6 +53,7 @@ impl Scene {
         Some(SurfaceInteraction {
             position: closest.position,
             normal: closest.normal,
+            t: closest.t,
             material: closest.material,
             wi: closest.wi,
             emitter: None,
@@ -77,6 +83,12 @@ impl Sphere {
     }
 }
 
+impl InfinitePlane {
+    pub fn new(center: Point, normal: Vector, material: Box<dyn Material>) -> InfinitePlane {
+        InfinitePlane { center, normal, material }
+    }
+}
+
 impl Shape for Sphere {
     fn intersect(&self, ray: &Ray) -> Option<SurfaceInteraction> {
         let o = ray.origin;
@@ -101,6 +113,38 @@ impl Shape for Sphere {
         Some(SurfaceInteraction {
             position: intersection,
             normal,
+            t,
+            wi: -u,
+            material: &self.material,
+            emitter: None,
+        })
+    }
+}
+
+impl Shape for InfinitePlane {
+    fn intersect(&self, ray: &Ray) -> Option<SurfaceInteraction> {
+        let o = ray.origin;
+        let u = ray.direction.normalize();
+        let n = self.normal;
+        let c = self.center;
+
+        let denom = dot(u, n);
+        if denom > -1e-6 {
+            return None
+        }
+
+        let t = dot(c - o, n) / denom;
+
+        if t < 0.0 {
+            return None
+        }
+
+        let intersection = o + t * u;
+        
+        Some(SurfaceInteraction {
+            position: intersection,
+            normal: n,
+            t,
             wi: -u,
             material: &self.material,
             emitter: None,

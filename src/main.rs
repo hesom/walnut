@@ -5,10 +5,10 @@ use std::sync::Arc;
 use std::time::Instant;
 
 fn main() {
-    let spp = 1024;
+    let spp = 256;
     let sensor = Sensor::zero(800, 800);
     let camera = Arc::new(PinholeCamera::new(sensor, 75.0));
-    let integrator = Arc::new(PathIntegrator::new(16, 4));
+    let integrator = Arc::new(PathIntegrator::new(4, 2));
 
     let mut scene = Scene::new();
 
@@ -40,15 +40,100 @@ fn main() {
         }),
     );
 
+    let ground = InfinitePlane::new(
+        Point {
+            x: 0.0,
+            y: -1.0,
+            z: 0.0,
+        },
+        Vector {
+            x: 0.0,
+            y: 1.0,
+            z: 0.0,
+        },
+        Box::new(DiffuseMaterial{
+            albedo: Color::new(0.5, 0.5, 0.5),
+        }),
+    );
+
+    let back = InfinitePlane::new(
+        Point {
+            x: 0.0,
+            y: 0.0,
+            z: -4.0,
+        },
+        Vector {
+            x: 0.0,
+            y: 0.0,
+            z: 1.0,
+        },
+        Box::new(DiffuseMaterial{
+            albedo: Color::new(0.5, 0.5, 0.5),
+        }),
+    );
+
+    let top = InfinitePlane::new(
+        Point {
+            x: 0.0,
+            y: 4.0,
+            z: 0.0,
+        },
+        Vector {
+            x: 0.0,
+            y: -1.0,
+            z: 0.0,
+        },
+        Box::new(DiffuseMaterial{
+            albedo: Color::new(0.5, 0.5, 0.5),
+        }),
+    );
+
+    let left = InfinitePlane::new(
+        Point {
+            x: -4.0,
+            y: 0.0,
+            z: 0.0,
+        },
+        Vector {
+            x: 1.0,
+            y: 0.0,
+            z: 0.0,
+        },
+        Box::new(DiffuseMaterial{
+            albedo: Color::new(0.5, 0.5, 0.5),
+        }),
+    );
+
+    let right = InfinitePlane::new(
+        Point {
+            x: 4.0,
+            y: 0.0,
+            z: 0.0,
+        },
+        Vector {
+            x: -1.0,
+            y: 0.0,
+            z: 0.0,
+        },
+        Box::new(DiffuseMaterial{
+            albedo: Color::new(0.5, 0.5, 0.5),
+        }),
+    );
+
     scene.add_shape(Box::new(sphere1));
     scene.add_shape(Box::new(sphere2));
+    scene.add_shape(Box::new(ground));
+    scene.add_shape(Box::new(back));
+    scene.add_shape(Box::new(top));
+    scene.add_shape(Box::new(left));
+    scene.add_shape(Box::new(right));
 
     
     let light = PointLight::new(
         Point{
-            x: 0.5,
-            y: 0.5,
-            z: 0.5,
+            x: 1.0,
+            y: 1.0,
+            z: 1.0,
         },
         0.8,
     );

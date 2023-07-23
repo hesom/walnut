@@ -46,12 +46,15 @@ impl Integrator for PathIntegrator {
             for light in scene.lights.iter() {
                 let light_sample = light.sample();
                 let wo = (light_sample.position - si.position).normalize();
+                let dist = norm(light_sample.position - si.position);
                 let shadow_si = scene.closest_hit(&Ray {
                     origin: si.position + 1e-3*wo,
                     direction: wo,
                 });
-                if let Some(_) = shadow_si {
-                    continue;
+                if let Some(si) = shadow_si {
+                    if si.t < dist {
+                        continue;
+                    }
                 }
 
                 le = le + si.material.bsdf_eval(&si, wo).radiance * light_sample.radiance;

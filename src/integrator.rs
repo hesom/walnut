@@ -39,7 +39,9 @@ impl Integrator for PathIntegrator {
             };
 
             if let Some(light) = si.emitter {
-                color = color + throughput * light.sample().radiance;
+                if bounce == 0 {
+                    color = color + throughput * light.sample().radiance;
+                }
             }
 
             let mut le = Color::new(0.0, 0.0, 0.0);

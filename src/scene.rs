@@ -36,19 +36,9 @@ pub struct Scene {
 
 impl Scene {
     pub fn closest_hit(&self, ray: &Ray) -> Option<SurfaceInteraction> {
-       let mut hits : Vec<_> = self.shapes.iter()
-           .filter_map(|shape| shape.intersect(&ray))
-           .collect();
-      
-        if hits.is_empty() {
-            return None
-        }
-
-        hits.sort_by(|a, b| {
-            a.t.partial_cmp(&b.t).unwrap()
-        });
-
-        let closest = hits.get(0)?;
+        let closest = self.shapes.iter()
+            .filter_map(|shape| shape.intersect(&ray))
+            .min_by(|a, b| a.t.partial_cmp(&b.t).unwrap())?;
 
         Some(SurfaceInteraction {
             position: closest.position,

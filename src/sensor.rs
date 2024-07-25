@@ -1,6 +1,6 @@
-use std::ops::{Add, Mul};
 use image::ImageResult;
 use rand::Rng;
+use std::ops::{Add, Div, Mul};
 use std::sync::RwLock;
 
 use crate::math::*;
@@ -29,7 +29,7 @@ pub struct PinholeCamera {
     position: Point,
 }
 
-pub trait Camera : Send + Sync {
+pub trait Camera: Send + Sync {
     fn get_sensor_mut(&mut self) -> &mut Sensor;
     fn get_sensor(&self) -> &Sensor;
     fn get_pixels_mut(&mut self) -> &mut Vec<Pixel>;
@@ -42,7 +42,11 @@ impl PinholeCamera {
         PinholeCamera {
             sensor,
             fov: fov.to_radians(),
-            position: Point {x: 0.0, y:0.0, z: 0.0 },
+            position: Point {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+            },
         }
     }
 
@@ -151,6 +155,28 @@ impl Mul<Color> for Color {
             r: self.r * rhs.r,
             g: self.g * rhs.g,
             b: self.b * rhs.b,
+        }
+    }
+}
+
+impl Div<Color> for Color {
+    type Output = Color;
+    fn div(self, rhs: Color) -> Self::Output {
+        Color {
+            r: self.r / rhs.r,
+            g: self.g / rhs.g,
+            b: self.b / rhs.b,
+        }
+    }
+}
+
+impl Div<f32> for Color {
+    type Output = Color;
+    fn div(self, rhs: f32) -> Self::Output {
+        Color {
+            r: self.r / rhs,
+            g: self.g / rhs,
+            b: self.b / rhs,
         }
     }
 }

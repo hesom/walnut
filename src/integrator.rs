@@ -1,7 +1,7 @@
+use crate::material::*;
 use crate::math::*;
 use crate::scene::*;
 use crate::sensor::Color;
-use crate::material::*;
 
 use rand::Rng;
 
@@ -16,7 +16,10 @@ pub struct PathIntegrator {
 
 impl PathIntegrator {
     pub fn new(max_bounce: usize, russian_roulette: usize) -> PathIntegrator {
-        PathIntegrator { max_bounce , russian_roulette }
+        PathIntegrator {
+            max_bounce,
+            russian_roulette,
+        }
     }
 }
 
@@ -50,7 +53,7 @@ impl Integrator for PathIntegrator {
                 let wo = (light_sample.position - si.position).normalize();
                 let dist = norm(light_sample.position - si.position);
                 let shadow_si = scene.closest_hit(&Ray {
-                    origin: si.position + 1e-3*wo,
+                    origin: si.position + 1e-3 * wo,
                     direction: wo,
                 });
                 if let Some(si) = shadow_si {
@@ -66,11 +69,11 @@ impl Integrator for PathIntegrator {
 
             // compute new ray direction
             let wo = si.material.bsdf_sample(&si);
-            let BsdfSample{radiance, pdf} = si.material.bsdf_eval(&si, wo);
+            let BsdfSample { radiance, pdf } = si.material.bsdf_eval(&si, wo);
 
-            throughput = (1.0/pdf) * throughput * radiance;
-            
-            ray.origin = si.position + 1e-3*wo;
+            throughput = (1.0 / pdf) * throughput * radiance;
+
+            ray.origin = si.position + 1e-3 * wo;
             ray.direction = wo;
 
             if bounce > self.russian_roulette {

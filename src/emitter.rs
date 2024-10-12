@@ -1,5 +1,5 @@
-use crate::sensor::Color;
 use crate::math::*;
+use crate::sensor::Color;
 
 pub trait Emitter: Sync + Send {
     fn sample(&self) -> EmitterSample;
@@ -21,7 +21,7 @@ impl Emitter for PointLight {
         EmitterSample {
             radiance: self.intensity,
             position: self.position,
-            weight: 1.0
+            weight: 1.0,
         }
     }
 }

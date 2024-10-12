@@ -1,7 +1,7 @@
 use walnut::*;
 
-use std::thread;
 use std::sync::Arc;
+use std::thread;
 use std::time::Instant;
 
 fn main() {
@@ -19,7 +19,7 @@ fn main() {
             z: -2.5,
         },
         1.0,
-        Box::new(PhongMaterial{
+        Box::new(PhongMaterial {
             albedo: Color::new(0.8, 0.0, 0.0),
             specular: Color::new(0.8, 0.8, 0.8),
             exponent: 10.0,
@@ -33,7 +33,7 @@ fn main() {
             z: -1.0,
         },
         0.1,
-        Box::new(PhongMaterial{
+        Box::new(PhongMaterial {
             albedo: Color::new(0.0, 0.2, 0.8),
             specular: Color::new(1.0, 1.0, 1.0),
             exponent: 25.0,
@@ -51,7 +51,7 @@ fn main() {
             y: 1.0,
             z: 0.0,
         },
-        Box::new(DiffuseMaterial{
+        Box::new(DiffuseMaterial {
             albedo: Color::new(0.5, 0.5, 0.5),
         }),
     );
@@ -67,7 +67,7 @@ fn main() {
             y: 0.0,
             z: 1.0,
         },
-        Box::new(DiffuseMaterial{
+        Box::new(DiffuseMaterial {
             albedo: Color::new(0.5, 0.5, 0.5),
         }),
     );
@@ -83,7 +83,7 @@ fn main() {
             y: -1.0,
             z: 0.0,
         },
-        Box::new(DiffuseMaterial{
+        Box::new(DiffuseMaterial {
             albedo: Color::new(0.5, 0.5, 0.5),
         }),
     );
@@ -99,7 +99,7 @@ fn main() {
             y: 0.0,
             z: 0.0,
         },
-        Box::new(DiffuseMaterial{
+        Box::new(DiffuseMaterial {
             albedo: Color::new(0.5, 0.5, 0.5),
         }),
     );
@@ -115,7 +115,7 @@ fn main() {
             y: 0.0,
             z: 0.0,
         },
-        Box::new(DiffuseMaterial{
+        Box::new(DiffuseMaterial {
             albedo: Color::new(0.5, 0.5, 0.5),
         }),
     );
@@ -128,9 +128,8 @@ fn main() {
     scene.add_shape(Box::new(left));
     scene.add_shape(Box::new(right));
 
-    
     let light = PointLight::new(
-        Point{
+        Point {
             x: 1.0,
             y: 1.0,
             z: 1.0,
@@ -139,12 +138,12 @@ fn main() {
     );
 
     scene.add_light(Box::new(light));
-    
+
     let scene = Arc::new(scene);
 
     let num_cores = match thread::available_parallelism() {
         Ok(num_cores) => num_cores.get(),
-        Err(_) => 4
+        Err(_) => 4,
     };
 
     println!("Running {num_cores} tasks");
@@ -152,7 +151,7 @@ fn main() {
     let chunks = camera.get_pixels().chunks(num_cores);
 
     let timer = Instant::now();
-    thread::scope(|scope|{
+    thread::scope(|scope| {
         for chunk in chunks {
             let camera = camera.clone();
             let scene = scene.clone();
@@ -169,7 +168,7 @@ fn main() {
 
                     if let Some(radiance) = radiance {
                         let f = 1.0 / spp as f32;
-                        *pixel.color.write().unwrap() = f*radiance;
+                        *pixel.color.write().unwrap() = f * radiance;
                     }
                 }
             });

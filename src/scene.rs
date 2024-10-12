@@ -1,7 +1,7 @@
+use crate::emitter::Emitter;
 use crate::material::*;
 use crate::math::*;
 use crate::sensor::Color;
-use crate::emitter::Emitter;
 
 pub struct SurfaceInteraction<'a> {
     pub position: Point,
@@ -24,7 +24,7 @@ pub struct InfinitePlane {
     pub material: Box<dyn Material>,
 }
 
-pub trait Shape : Send + Sync {
+pub trait Shape: Send + Sync {
     fn intersect(&self, ray: &Ray) -> Option<SurfaceInteraction>;
 }
 
@@ -36,7 +36,9 @@ pub struct Scene {
 
 impl Scene {
     pub fn closest_hit(&self, ray: &Ray) -> Option<SurfaceInteraction> {
-        let closest = self.shapes.iter()
+        let closest = self
+            .shapes
+            .iter()
             .filter_map(|shape| shape.intersect(&ray))
             .min_by(|a, b| a.t.partial_cmp(&b.t).unwrap())?;
 
@@ -54,7 +56,7 @@ impl Scene {
         Scene {
             shapes: Vec::new(),
             lights: Vec::new(),
-            background_color: Color::new(0.2, 0.2, 0.2)
+            background_color: Color::new(0.2, 0.2, 0.2),
         }
     }
 
@@ -69,13 +71,21 @@ impl Scene {
 
 impl Sphere {
     pub fn new(center: Point, radius: f32, material: Box<dyn Material>) -> Sphere {
-        Sphere { center, radius, material }
+        Sphere {
+            center,
+            radius,
+            material,
+        }
     }
 }
 
 impl InfinitePlane {
     pub fn new(center: Point, normal: Vector, material: Box<dyn Material>) -> InfinitePlane {
-        InfinitePlane { center, normal, material }
+        InfinitePlane {
+            center,
+            normal,
+            material,
+        }
     }
 }
 
@@ -94,7 +104,7 @@ impl Shape for Sphere {
 
         let t = -dot(u, o - c) - f32::sqrt(discriminant);
         if t < 0.0 {
-            return None
+            return None;
         }
 
         let intersection = o + t * u;
@@ -120,17 +130,17 @@ impl Shape for InfinitePlane {
 
         let denom = dot(u, n);
         if denom > -1e-6 {
-            return None
+            return None;
         }
 
         let t = dot(c - o, n) / denom;
 
         if t < 0.0 {
-            return None
+            return None;
         }
 
         let intersection = o + t * u;
-        
+
         Some(SurfaceInteraction {
             position: intersection,
             normal: n,
@@ -146,8 +156,16 @@ impl<'a> SurfaceInteraction<'a> {
     pub fn local_frame(&self) -> (Vector, Vector, Vector) {
         let w = self.normal;
         let axis = match f32::abs(w.x) > 0.1 {
-            true => Vector {x: 0.0, y: 1.0, z: 0.0},
-            false => Vector {x: 1.0, y: 0.0, z: 0.0},
+            true => Vector {
+                x: 0.0,
+                y: 1.0,
+                z: 0.0,
+            },
+            false => Vector {
+                x: 1.0,
+                y: 0.0,
+                z: 0.0,
+            },
         };
         let u = cross(axis, w).normalize();
         let v = cross(w, u);
@@ -169,7 +187,11 @@ mod tests {
         };
         let radius = 3.0;
 
-        let sphere = Sphere { center, radius, material: Box::new(BlackBody{}) };
+        let sphere = Sphere {
+            center,
+            radius,
+            material: Box::new(BlackBody {}),
+        };
 
         let ray = Ray {
             origin: Point {
